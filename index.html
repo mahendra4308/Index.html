@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ball Escape Through Two Cuts</title>
+  <style>
+    body {
+      margin: 0;
+      background: gray;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    canvas {
+      background: red;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="a" width="300" height="300"></canvas>
+
+<script>
+  var a = document.getElementById("a");
+  var b = a.getContext("2d");
+
+  var cx = 150, cy = 150, bigR = 150;
+  var balls = [];
+
+  function randomBWColor() {
+    return Math.random() > 0.5 ? "black" : "blue";
+  }
+
+  function createBall() {
+    var angle = Math.random() * 2* Math.PI;
+    var speed = 1 + Math.random() * 2;
+    return {
+      x: cx,
+      y: cy,
+      dx: Math.cos(angle) * speed,
+      dy: Math.sin(angle) * speed,
+      r: 8,
+      color: randomBWColor(),
+      escaped: false
+    };
+  }
+
+  balls.push(createBall());
+
+  function draw() {
+    b.clearRect(0, 0, 300, 300);
+
+    // Draw top cut
+    b.beginPath();
+    b.strokeStyle = "gray";
+    b.lineWidth = 20;
+    b.arc(cx, cy, bigR, -0.3, -0.1);
+    b.stroke();
+
+    // Draw bottom cut
+    b.beginPath();
+    b.strokeStyle = "gray";
+    b.lineWidth = 20;
+    b.arc(cx, cy, bigR, Math.PI + 0.1, Math.PI + 0.3);
+    b.stroke();
+
+    var newBalls = [];
+
+    for (var i = 0; i < balls.length; i++) {
+      var d = balls[i];
+
+      if (d.escaped) {
+        d.x += d.dx;
+        d.y += d.dy;
+        if (d.x < -50 || d.x > 350 || d.y < -50 || d.y > 350) continue;
+      } else {
+        d.x += d.dx;
+        d.y += d.dy;
+
+        var dx = d.x - cx;
+        var dy = d.y - cy;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        var angle = Math.atan2(dy, dx);
+
+        var inTopCut = dist + d.r > bigR - 5 && angle > -0.3 && angle < -0.1;
+        var inBottomCut = dist + d.r > bigR - 5 && angle > Math.PI + 0.1 && angle < Math.PI + 0.3;
+
+        if (inTopCut || inBottomCut) {
+          d.escaped = true;
+        } else if (dist + d.r > bigR) {
+          var nx = dx / dist;
+          var ny = dy / dist;
+          var dot = d.dx * nx + d.dy * ny;
+          d.dx -= 2 * dot * nx;
+          d.dy -= 2 * dot * ny;
+
+          newBalls.push(createBall());
+        }
+      }
+
+      b.beginPath();
+      b.arc(d.x, d.y, d.r, 0, 4 * Math.PI);
+      b.fillStyle = d.color;
+      b.fill();
+    }
+
+    balls = balls.concat(newBalls);
+    balls = balls.filter(d => d.x > -50 && d.x < 350 && d.y > -50 && d.y < 350);
+
+    requestAnimationFrame(draw);
+  }
+
+  draw();
+</script>
+
+</body>
+</html>
